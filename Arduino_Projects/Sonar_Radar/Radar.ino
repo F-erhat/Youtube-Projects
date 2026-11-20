@@ -1,74 +1,54 @@
 
-#include <Servo.h>
+const int trigPin = 8;
+const int echoPin = 9;
 
-Servo radarServo;
-
-// Pin definitions
-const int servoPin = 8;
-const int trigPin = 9;
-const int echoPin = 10;
-
-// Servo scanning range
-const int minAngle = 0;
-const int maxAngle = 180;
-
-// Distance measurement
-long duration;
-int distance;
+const int redLED = 3;
+const int greenLED = 5;
 
 void setup() {
-  Serial.begin(9600);
-
-  radarServo.attach(servoPin);
-
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-  radarServo.write(minAngle);
-  delay(500);
-}
+  pinMode(redLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
 
-int measureDistance() {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  duration = pulseIn(echoPin, HIGH, 30000);
-
-  if (duration == 0) {
-    return 999;
-  }
-
-  return (int)(duration * 0.0343 / 2);
-}
-
-void sendRadarData(int angle) {
-  distance = measureDistance();
-
-  Serial.print(angle);
-  Serial.print(",");
-  Serial.print(distance);
-  Serial.print(".");
+  Serial.begin(9600);
 }
 
 void loop() {
 
-  // Scan from 0 to 180 degrees
-  for (int angle = minAngle; angle <= maxAngle; angle++) {
-    radarServo.write(angle);
-    delay(30);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
 
-    sendRadarData(angle);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin, LOW);
+
+  long sure = pulseIn(echoPin, HIGH, 30000);
+
+  if (sure == 0) {
+    Serial.println("YANKI ALINAMADI!");
+
+    digitalWrite(redLED, LOW);
+    digitalWrite(greenLED, LOW);
+  }
+  else {
+    float mesafe = sure * 0.0343 / 2;
+
+    Serial.print("Mesafe: ");
+    Serial.print(mesafe);
+    Serial.println(" cm");
+
+    if (mesafe <= 40) {
+      digitalWrite(redLED, HIGH);
+      digitalWrite(greenLED, LOW);
+    }
+    else {
+      digitalWrite(redLED, LOW);
+      digitalWrite(greenLED, HIGH);
+    }
   }
 
-  // Scan from 180 to 0 degrees
-  for (int angle = maxAngle; angle >= minAngle; angle--) {
-    radarServo.write(angle);
-    delay(30);
-
-    sendRadarData(angle);
-  }
+  delay(200);
 }
